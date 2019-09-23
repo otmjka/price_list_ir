@@ -1,9 +1,21 @@
 from logging import info
 import sqlite3
 
+# TODO: is module init happends once?
+# TODO: remove to config
+DB_PATH = '/Users/admin/projects/pharm-portal/syn-py/src/bin/generated-2019-07-29/syn.db'
 
 TN_TERM_DOCS = 'term_docs'
 TN_ROW_ID = 'row_en_id'
+TN_UN = 'ISKUs'
+# exists table flag
+row_en_id_exist = False
+
+info('db: init {}'.format(DB_PATH))
+
+# cached TN_ROW_ID {[row_num]: en_uuid}
+# un_skus = None
+cache = dict(un_skus=None)
 
 def db_con(db_path):
   info('connecting to {}'.format(db_path))
@@ -16,12 +28,11 @@ def db_con(db_path):
 # Init module. first import.
 #
 
-# TODO: is init happend once?
-fn_db = '/Users/admin/projects/pharm-portal/syn-py/src/bin/generated-2019-07-29/syn.db'
-info('db: init {}'.format(fn_db))
+conn, cursor = db_con(DB_PATH)
 
-conn, cursor = db_con(fn_db)
-
+#
+# Common
+#
 def is_table_exists(table_name, cursor=cursor):
   q = 'SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'{}\';'
   query = q.format(table_name)
@@ -31,6 +42,16 @@ def is_table_exists(table_name, cursor=cursor):
   info('is table `{}` exists?: {}'.format(table_name, result))
   return result
 
+def truncate_table(table_name, rw=False, conn=conn, cursor=cursor):
+  # TODO:
+  if rw == True:
+    q = 'DELETE FROM {};'
+    query = q.format(table_name)
+    cursor.execute(query)
+    conn.commit()
+#
+# Create tables
+#
 def create_row_en_id_table(conn=conn, cursor=cursor):
   TN = TN_ROW_ID
   if is_table_exists(TN, cursor):
@@ -45,51 +66,15 @@ def create_tn_term_docs_table(conn=conn, cursor=cursor):
   TN = TN_TERM_DOCS
   if is_table_exists(TN, cursor):
     return
-  q = 'CREATE TABLE {} (term TEXT PRIMARY KEY ASC, docs_json TEXT, trade_name TEXT)'
+  q = 'CREATE TABLE {} (term TEXT PRIMARY KEY ASC, docs_json TEXT)'
   query = q.format(TN)
   cursor.execute(query)
   conn.commit()
-  info('table `{}` was create'.format(TN))
+  info('table `{}` was create[{}]'.format(TN, query))
 
 
 create_row_en_id_table()
 create_tn_term_docs_table()
-
-def get_en_skus():
-  info('[+] 1. get_en_skus: load UN skus id, data, row_num')
-  query = 'select id, data, row_num from ISKUs order by row_num'
-  cursor.execute(query)
-  result = cursor.fetchall()
-  info('loaded records: {}'.format(len(result)))
-  return result
-
-def get_term_docs_table(conn=conn, cursor=cursor):
-  q = 'select term, docs_json, trade_name from {} order by term'
-  query = q.format(TN_TERM_DOCS)
-  cursor.execute(query)
-  records = cursor.fetchall()
-  info('loaded records: {}'.format(len(records)))
-  return records
-
-def rw_term_docs_table(items, conn=conn, cursor=cursor):
-  tn = TN_TERM_DOCS
-
-  q = 'DELETE FROM {};'
-  query = q.format(tn)
-  cursor.execute(query)
-  conn.commit()
-
-  values = ['(\'{}\',\'{}\')'.format(term, docs_json) for term, docs_json in items]
-  values = ','.join(values)
-
-  q = 'INSERT INTO {} VALUES {};'
-  query = q.format(tn, values)
-  cursor.execute(query)
-  conn.commit()
-
-def save_idx_row_id(idx):
-  batch = 1000
-  print('save_idx_row_id')
 
 def save_tn_dict(tn_term_dict):
   print('save_tn_dict')

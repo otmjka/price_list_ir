@@ -1,6 +1,5 @@
 import services.log
 from logging import info, debug
-from db.common import get_en_skus
 from indexes.tn import build_indexes, get_terms_skus
 from indexes.tn import intersection
 
@@ -9,11 +8,8 @@ from helpers.strings import tokenize
 from helpers.reports import result_report
 
 info('start')
-# get ISKUS
-idx_source = get_en_skus()
-
 # 1. build index row_num/en_uuid
-row_id, token_docs, token_tn, token_keys = build_indexes(idx_source)
+indexes = build_indexes()
 
 # 4. get med items from price_list
 plist = load_pulse()
@@ -31,7 +27,8 @@ name_terms = tokenize(name) # name
 
 # return
 # [('A_term', [term_sku_0, ..., term_sku_n]), ...]
-terms_skus = get_terms_skus(name_terms, token_docs)
+terms_docs = indexes['terms_docs']
+terms_skus = get_terms_skus(name_terms, terms_docs)
 
 # 0, few, normal, many
 # simple, all not empty, and len(term) > 2

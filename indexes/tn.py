@@ -1,8 +1,10 @@
-import collections
+from collections import OrderedDict
 import json
 from logging import info
 from helpers.tn import sku_str_to_dict
-from db.common import get_term_docs_table, rw_term_docs_table
+import db.un as db_un
+import db.tn as db_tn
+
 
 SPACE = ' '
 COMMA = ','
@@ -17,106 +19,138 @@ build_index_row_en_uuid - list [(id, data, row_num), ...] => sorted dict {[row_n
 ## Indexes
 ##
 
-"""
-@param src - list [(id, data, row_num), ...]
+def prepare_row_id_from_db(db_idx: list):
+  return OrderedDict(db_idx)
 
-@return sorted dict {[row_num]: en_uuid}
-
-"""
-def build_index_row_en_uuid(src):
-  info('[+] build_index_row_en_uuid {[row_num]: en_uuid}')
-  l = len(src)
+def compute_row_id_idx(un_db):
+  info('compute ordered dict {[row_num]: en_uuid}')
   ROW_NUM_COL = 2
-  start = src[0][ROW_NUM_COL]
-  info('index starts with: [{}, ..., {}]'.format(start, l))
-  idx = dict([(row_num, id) for id, data, row_num in src])
+  l = len(un_db)
+  start = un_db[0][ROW_NUM_COL]
+  info('index bounds: [{}, ..., {}]'.format(start, l))
+  # `un_db` is supposed to be sorted by `row_num`
+  db_idx = [(row_num, uuid) for uuid, _, row_num in un_db]
+  idx = prepare_row_id_from_db(db_idx)
   return idx
 
-# in given token_dict: dict
-# create keys(term) if not exists
-# append to term's docs list
-def bow_to_dict(docid: int, trade_name: str, token_dict: dict, token_trade_name: dict):
-  bow = set(trade_name.split(SPACE))
-  for token in bow:
-    if token in token_dict:
-      if trade_name not in token_trade_name[token]:
-        token_trade_name[token].append(trade_name)
-      docid_list = token_dict[token]
-      if docid in docid_list:
-        continue
-      docid_list.append(docid)
-      sorted_list = sorted(docid_list)
-      token_dict[token] = sorted_list
+"""
+# @fn build_index_row_en_uuid()
+# @param src - list [(id, data, row_num), ...]
+# @return sorted dict {[row_num]: en_uuid}
+"""
+def build_index_row_en_uuid():
+  info('[+] build_index_row_en_uuid {[row_num]: en_uuid}')
+  db_idx = db_un.load_row_un_id_index()
+  # case: index cached in db
+  if db_idx != False:
+    idx = prepare_row_id_from_db(db_idx)
+    return idx
 
-    else:
-      docid_list = [docid]
-      token_dict[token] = docid_list
-      token_trade_name[token] = [trade_name]
+  # case: there is no index cached in db
 
+  un_db = db_un.get_en_skus()
+  idx = compute_row_id_idx(un_db)
+  db_un.save_row_id_idx(idx)
+
+  return idx
+
+"""
 # loads index from DB
-def load_dict():
-  recs = get_term_docs_table()
+# if need make new one index
+# => False 
+# if exists in db cache
+# => OrderDict, False
+"""
+def load_terms_docs_idx():
+  recs = db_tn.get_term_docs_table()
   l = len(recs)
   if l == 0:
     info('load_dict: term_docs is EMPTY')
     return False
   info('load_dict: {} terms'.format(l))
   term_docs_list = []
-  token_trade_name_list = []
-  term_keys = []
 
-  for term, docs_json, trade_name in recs:
+  for term, docs_json in recs:
     doc_str = docs_json.split(COMMA)
     docs_ints = [int(s) for s in doc_str]
-    term_keys.append(term)
     term_docs_list.append((term, docs_ints))
-    token_trade_name_list.append((term, trade_name))
 
-  term_docs_dict = dict(term_docs_list)
-  token_trade_name = dict(token_trade_name_list) # TODO:
+  term_docs_dict = OrderedDict(term_docs_list)
   # idx loaded. flag means do not save
   flag_save = False
-  return term_docs_dict, token_trade_name, term_keys, flag_save
+  return term_docs_dict, flag_save
 
-def save_tn_dict(token_doc_id: dict):
+"""
+# in given token_dict: dict
+# create keys(term) if not exists
+# append to term's docs list
+"""
+def bow_to_dict(docid: int, trade_name: str, terms_docs: dict):
+  bow = set(trade_name.split(SPACE))
+  for term in bow:
+    if term in terms_docs:
+      docid_list = terms_docs[term]
+      if docid in docid_list:
+        continue
+      docid_list.append(docid)
+      sorted_list = sorted(docid_list)
+      terms_docs[term] = sorted_list
+
+    else:
+      docid_list = [docid]
+      terms_docs[term] = docid_list
+
+
+def compute_tn_index(un_db):
+  info('start compute `term`: [doc_0, ...] index')
+  TN_FIELD = 'trade_name'
+  terms_docs_dict = dict()
+  for id, sku_data_str, row_num in un_db:
+    sku = json.loads(sku_data_str)
+    trade_name = sku[TN_FIELD]
+    bow_to_dict(row_num, trade_name, terms_docs_dict)
+  token_keys = sorted(terms_docs_dict.keys())
+  sorted_terms_docs_list = [(term, terms_docs_dict[term]) for term in token_keys]
+  terms_docs = OrderedDict(sorted_terms_docs_list)
+  info('TN dict created')
+  return terms_docs
+
+def save_tn_dict(terms_docs_idx: OrderedDict):
   info('prepare td_dict to save')
-  keys = sorted(token_doc_id.keys())
   to_save = []
-  for key in keys:
-    term = key.replace("'", "''")
-    int_to_str = ['{}'.format(n) for n in token_doc_id[key]]
+  for term in terms_docs_idx.items():
+    term_value = term[0].replace("'", "''")
+    docid_list = term[1]
+    int_to_str = ['{}'.format(n) for n in docid_list]
     csv = ','.join(int_to_str)
-    to_save.append((term, csv))
+    to_save.append((term_value, csv))
   if len(to_save) == 0:
     return False
-  rw_term_docs_table(to_save)
+  # save index
+  db_tn.save_term_docs_table(to_save)
   info('td_dict saved')
   return True
 
-def compute_tn_index(src):
-  info('start compute `term`: [doc_0, ...] index')
-  TN_FIELD = 'trade_name'
-  token_doc_id = dict()
-  token_trade_name = dict()
-  for id, sku_data_str, row_num in src:
-    sku = json.loads(sku_data_str)
-    trade_name = sku[TN_FIELD]
-    bow_to_dict(row_num, trade_name, token_doc_id, token_trade_name)
-  token_keys = sorted(token_doc_id.keys())
-  info('TN dict created')
-  return token_doc_id, token_trade_name, token_keys
-
-def build_tn_dict(src):
+def build_tn_dict():
   # try to load index or compute new one
-  token_docs, token_tn, token_keys = load_dict() and compute_tn_index(src)
-  save_tn_dict(token_docs, token_tn, token_keys)
-  return token_docs, token_tn, token_keys
+  terms_docids = load_terms_docs_idx()
+  if terms_docids != False:
+    return terms_docids
 
-def build_indexes(src):
+  un_db_skus = db_un.get_en_skus()
+  terms_docids = compute_tn_index(un_db_skus)
+
+  save_tn_dict(terms_docids)
+  return terms_docids
+
+# build {[row_num]: UN_UUID} dict
+# build ordered dict {[term]: [doc_id_0, ..., doc_id_n]}
+def build_indexes():
   info('\n\n##\n## Indexes\n##\n\nbuild indexes:')
-  row_id = build_index_row_en_uuid(src)
-  token_docs, token_tn, token_keys = build_tn_dict(src)
-  return row_id, token_docs, token_tn, token_keys
+  rows_id = build_index_row_en_uuid() # {[row_num]: UN_UUID}
+  terms_docs = build_tn_dict() # ordered dict {[term]: [doc_id_0, ..., doc_id_n]}
+  return dict(rows_id=rows_id, terms_docs=terms_docs)
+
 ##
 ## select documens by term
 ##
