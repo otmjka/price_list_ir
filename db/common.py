@@ -1,44 +1,80 @@
+from logging import info
 import sqlite3
 
+# TODO: is module init happends once?
+# TODO: remove to config
+DB_PATH = '/Users/admin/projects/pharm-portal/syn-py/src/bin/generated-2019-07-29/syn.db'
+
+TN_TERM_DOCS = 'term_docs'
+TN_ROW_ID = 'row_en_id'
+TN_UN = 'ISKUs'
+# exists table flag
+row_en_id_exist = False
+
+info('db: init {}'.format(DB_PATH))
+
+# cached TN_ROW_ID {[row_num]: en_uuid}
+# un_skus = None
+cache = dict(un_skus=None)
+
 def db_con(db_path):
+  info('connecting to {}'.format(db_path))
   conn = sqlite3.connect(db_path, check_same_thread=False, uri=True)
   cursor = conn.cursor()
+  info('connected')
   return conn, cursor
 
-def is_table_exists(table_name, cursor):
-  query = "SELECT name FROM sqlite_master WHERE type='table' AND name='{}';".format(table_name)
+#
+# Init module. first import.
+#
+
+conn, cursor = db_con(DB_PATH)
+
+#
+# Common
+#
+def is_table_exists(table_name, cursor=cursor):
+  q = 'SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'{}\';'
+  query = q.format(table_name)
   cursor.execute(query)
-  result = cursor.fetchall()
-  return len(result) > 0
-
-def create_row_en_id_table(conn, cursor):
-  if is_table_exists('row_en_id', cursor):
-    return
-  cursor.execute(
-    'CREATE TABLE row_en_id (id text, row_num int PRIMARY KEY ASC)'
-  )
-  conn.commit()
-
-
-fn_db = '/Users/admin/projects/pharm-portal/syn-py/src/bin/generated-2019-07-29/syn.db'
-
-conn, cursor = db_con(fn_db)
-create_row_en_id_table(conn, cursor)
-
-print('[+] setup: connect to sqlite')
-print('[+] setup: create table row_en_id')
-
-def get_en_skus():
-  print('[+] 1. get_en_skus')
-  print('[+] 1.1 fetch ISKUS')
-  query = 'select id, data, row_num from ISKUs order by row_num'
-  cursor.execute(query)
-  result = cursor.fetchall()
+  records = cursor.fetchall()
+  result = len(records) > 0
+  info('is table `{}` exists?: {}'.format(table_name, result))
   return result
 
-def save_idx_row_id(idx):
-  batch = 1000
-  print('save_idx_row_id')
+def truncate_table(table_name, rw=False, conn=conn, cursor=cursor):
+  # TODO:
+  if rw == True:
+    q = 'DELETE FROM {};'
+    query = q.format(table_name)
+    cursor.execute(query)
+    conn.commit()
+#
+# Create tables
+#
+def create_row_en_id_table(conn=conn, cursor=cursor):
+  TN = TN_ROW_ID
+  if is_table_exists(TN, cursor):
+    return
+  q = 'CREATE TABLE {} (id text, row_num int PRIMARY KEY ASC)'
+  query = q.format(TN)
+  cursor.execute(query)
+  conn.commit()
+  info('table `{}` was created'.format(TN))
+
+def create_tn_term_docs_table(conn=conn, cursor=cursor):
+  TN = TN_TERM_DOCS
+  if is_table_exists(TN, cursor):
+    return
+  q = 'CREATE TABLE {} (term TEXT PRIMARY KEY ASC, docs_json TEXT)'
+  query = q.format(TN)
+  cursor.execute(query)
+  conn.commit()
+  info('table `{}` was create[{}]'.format(TN, query))
+
+
+create_row_en_id_table()
+create_tn_term_docs_table()
 
 def save_tn_dict(tn_term_dict):
   print('save_tn_dict')
