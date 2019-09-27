@@ -3,5 +3,5 @@ __pycache__
 .idea
 .ipynb_checkpoints
 log_tmp
-*.ipynb
+# *.ipynb
 tmp_log

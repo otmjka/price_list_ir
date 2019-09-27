@@ -16,6 +16,8 @@ def load_row_un_id_index(cursor=cursor):
     return records
   return False
 
+# TODO: at first load: str to dict
+# TODO: simple index where trade_name, count and etc in completed form
 #
 # UN data
 #
