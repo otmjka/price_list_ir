@@ -1,8 +1,11 @@
 conda activate syn-ir
 
-deps:
-pandas
-xlrd
+## deps:
+
+- pandas
+- xlrd
+- psycopg2
+
 
 1. load ISKUs from sqlite
 2. update ISKUs, new way, get from `unificated_nomenclature` table
