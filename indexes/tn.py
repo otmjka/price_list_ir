@@ -54,6 +54,12 @@ def build_index_row_en_uuid():
 
   return idx
 
+# {[row_num]: UN_UUID} => {[UN_UUID]: row_num}
+def build_inv_row_en_uuid(d):
+  items = list(d.items())
+  id_row = dict([(un_id, row_num) for row_num, un_id in items])
+  return id_row
+
 """
 # loads index from DB
 # if need make new one index
@@ -78,7 +84,7 @@ def load_terms_docs_idx():
   term_docs_dict = OrderedDict(term_docs_list)
   # idx loaded. flag means do not save
   flag_save = False
-  return term_docs_dict, flag_save
+  return term_docs_dict
 
 """
 # in given token_dict: dict
@@ -148,8 +154,11 @@ def build_tn_dict():
 def build_indexes():
   info('\n\n##\n## Indexes\n##\n\nbuild indexes:')
   rows_id = build_index_row_en_uuid() # {[row_num]: UN_UUID}
+  rows_id_inv = build_inv_row_en_uuid(rows_id)
   terms_docs = build_tn_dict() # ordered dict {[term]: [doc_id_0, ..., doc_id_n]}
-  return dict(rows_id=rows_id, terms_docs=terms_docs)
+  return dict(rows_id=rows_id,
+              terms_docs=terms_docs,
+              rows_id_inv=rows_id_inv)
 
 ##
 ## select documens by term
