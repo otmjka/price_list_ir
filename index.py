@@ -1,41 +1,41 @@
 import services.log
-from logging import info, debug
-from indexes.tn import build_indexes, get_terms_skus
-from indexes.tn import intersection
+from logging import info
+from indexes.tn import build_indexes
 
-from prices.helpers import load_pulse, get_med_items, get_price_item
-from helpers.strings import tokenize
-from helpers.reports import result_report
+from prices.helpers import get_pulse_live_imp
 
 info('start')
-# 1. build index row_num/en_uuid
+
+# 1. build indexes
 indexes = build_indexes()
-
-# 4. get med items from price_list
-plist = load_pulse()
-med_list = get_med_items(plist)
-
-#5. get an item from med_list
-name, company = get_price_item(med_list) # name_col, company_col
-
-debug('\n\nname: {}'.format(name))
-debug('company: {}'.format(company))
-debug('\n')
-
-name_terms = tokenize(name) # name
-# company_terms = tokenize(item.company)
-
-# return
-# [('A_term', [term_sku_0, ..., term_sku_n]), ...]
+rows_id = indexes['rows_id']
 terms_docs = indexes['terms_docs']
-terms_skus = get_terms_skus(name_terms, terms_docs)
 
-# 0, few, normal, many
-# simple, all not empty, and len(term) > 2
-result = intersection(terms_skus)
+# 2. get med items from price_list
+live_imp = get_pulse_live_imp()
 
-result_report(result)
+# 3. trade_name zone
+# 4. company zone
+# 5. dosage_form zone # таблетки, покрытые плёночной оболочкой
+# 6. active chemical element
+## inn # # ситаглиптин sitagliptin sitagliptinum 0.05 грамм гметформин metformin metforminum 1 грамм г
+## measure_unit
+# 7. count zone # x28(28 шт)
 
+# => large list of docs(un_id)
+
+# 8. for each row in price list:
+# to all docs was found in zone_i assign zone_i_weight
+## zones = [tn, company, dosage, active_elem, count]
+## weights = [zone_i_weight] i in [0, len(zones) - 1]
+## sum([weight in weights]) = 1
+
+# 9. after sum weights for certain doc
+# price row item => [(doc, score), ...]
+# score value in [0, 1]
+# 10. sort by score
+
+# check with verified version
 
 
 
