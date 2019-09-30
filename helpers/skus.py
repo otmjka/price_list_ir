@@ -1,13 +1,14 @@
 import json
 
 import db.un as db_un
+from enums.common import TRADE_NAME
 
 def get_tn(row_num: int):
   skus = db_un.get_en_skus()
   # start index with 1
   sku_str = skus[row_num - 1][1]
   sku_dict = json.loads(sku_str)
-  tn = sku_dict['trade_name']
+  tn = sku_dict[TRADE_NAME]
   return tn
 
 def str_to_dict(sku_str: str):
@@ -32,6 +33,21 @@ def get_company(row_num):
   sku_str = skus[row_num - 1][1]
   sku_data = json.loads(sku_str)
   return sku_data['address']['company']['name']
+
+def get_tn_from_data(sku_data):
+  return sku_data[TRADE_NAME]
+
+def get_lek_form(sku_data):
+  return sku_data[TRADE_NAME]
+
+def show_sku(sku_data: dict):
+  # sku_row = skus_id_rows_idx[un_id]
+  # un_sku_data = un_skus[row]
+  tn = get_tn_from_data(sku_data)
+  lform = get_lek_form(sku_data)
+  # skus = db_un.get_en_skus()
+
+
 
 
 

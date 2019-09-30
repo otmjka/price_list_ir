@@ -103,3 +103,13 @@ def build_tn_indexes():
 
   terms_docs = build_tn_dict() # ordered dict {[term]: [doc_id_0, ..., doc_id_n]}
   return dict(terms_docs=terms_docs)
+
+def add_to_tn_index(term, doc, terms_docs):
+  # get existing item or new list
+  term_docs = term in terms_docs and terms_docs[term] or list()
+  if doc in term_docs:
+    return print('there is a doc[{}] in term[{}]'.format(doc, term))
+  # can optimizate, where insert?
+  term_docs.append(doc)
+  newdocs = sorted(term_docs)
+  terms_docs[term] = newdocs
