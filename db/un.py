@@ -2,7 +2,7 @@ from logging import info
 
 from db.common import TN_UN, TN_ROW_ID
 from db.common import conn, cursor, cache
-
+from db.skus import un_db_conn
 
 def load_row_un_id_index(cursor=cursor):
   info('[+] 1. get_en_skus: load UN skus id, data, row_num')
@@ -28,10 +28,12 @@ def get_en_skus():
     return un_skus
   info('[+] 1. get_en_skus: load UN skus id, data, row_num')
 
-  q = 'select id, data, row_num from {} order by row_num'
+  conn, cursor, = un_db_conn()
+  q = 'select id, data from skus as s order by id;'
   query = q.format(TN_UN)
   cursor.execute(query)
   result = cursor.fetchall()
+  conn.close()
   cache['un_skus'] = result
   info('loaded records: {}'.format(len(result)))
   return result
