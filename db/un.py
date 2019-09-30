@@ -38,6 +38,14 @@ def get_en_skus():
   info('loaded records: {}'.format(len(result)))
   return result
 
+# TODO: check for duplicates indexes/forms
+def get_sku_uuid(sku: tuple):
+  return sku[0]
+
+# TODO: check for duplicates
+def get_sku_data(sku: tuple):
+  return sku[1]
+
 def save_row_id_idx(idx, conn=conn, cursor=cursor, rw=True):
   tn = TN_ROW_ID
   # TODO: separate fn
