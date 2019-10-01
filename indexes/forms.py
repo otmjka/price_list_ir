@@ -139,7 +139,8 @@ def build_dosage_forms_idx():
   terms_docs = build_terms_docs(recs, id_row_idx)
   return dict(terms_docs=terms_docs,
               row_id=row_id_idx,
-              id_row=id_row_idx)
+              id_row=id_row_idx,
+              recs=recs)
 
 #
 # UN's skus table
