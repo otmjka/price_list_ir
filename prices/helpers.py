@@ -33,3 +33,15 @@ def get_pulse_live_imp():
   plist = load_pulse()
   live_imp = get_live_important_items(plist)
   return live_imp
+
+def extract_pline(price_i, plist):
+  # price
+  sel_plist = plist[price_i - 1:price_i]
+  sel_cols = sel_plist[sel_plist.columns[:3]]
+  values = sel_cols.values[0]
+  code, name, company = values
+  return name, company
+
+def show_pline(i, price_i, plist):
+  name, company = extract_pline(price_i, plist)
+  print('{}. [{}]\nP: {} [{}]'.format(i, price_i, name, company))
