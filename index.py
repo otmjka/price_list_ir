@@ -1,42 +1,62 @@
-import services.log
-from logging import info
-from indexes.tn import build_indexes
+### verifed
+from db.verified import report_row_num_un_uuid # (0)
 
-from prices.helpers import get_pulse_live_imp
+### price list
+from helpers.prices import load_pulse, show_pline
+from helpers.prices import extract_pline
 
-info('start')
+### indexes
+from indexes.main import all_idx
 
-# 1. build indexes
-indexes = build_indexes()
-rows_id = indexes['rows_id']
-terms_docs = indexes['terms_docs']
-
-# 2. get med items from price_list
-live_imp = get_pulse_live_imp()
-
-# 3. trade_name zone
-# 4. company zone
-# 5. dosage_form zone # таблетки, покрытые плёночной оболочкой
-# 6. active chemical element
-## inn # # ситаглиптин sitagliptin sitagliptinum 0.05 грамм гметформин metformin metforminum 1 грамм г
-## measure_unit
-# 7. count zone # x28(28 шт)
-
-# => large list of docs(un_id)
-
-# 8. for each row in price list:
-# to all docs was found in zone_i assign zone_i_weight
-## zones = [tn, company, dosage, active_elem, count]
-## weights = [zone_i_weight] i in [0, len(zones) - 1]
-## sum([weight in weights]) = 1
-
-# 9. after sum weights for certain doc
-# price row item => [(doc, score), ...]
-# score value in [0, 1]
-# 10. sort by score
-
-# check with verified version
+### helpers
+from helpers.skus import show_sku_by_id
 
 
+### zones
+from zones.common import zone_docs
 
+
+def get_sources():
+  # Verified
+  verified = report_row_num_un_uuid() # (0)
+  # Price list
+  plist = load_pulse() # (1)
+
+  #
+  # Indexes
+  #
+  idx = all_idx()
+  return verified, plist, idx
+
+# through verified skus
+def through_verifed(verified, plist, idx):
+  tn_terms_docs = idx['tn_idx']['terms_docs']
+  dasage_terms_docs = idx['dosage_idx']['terms_docs']
+  company_terms_docs = idx['company_idx']['terms_docs']
+
+  verified_items = list(verified.items())[:10]
+  for i, (price_i, un_id) in enumerate(verified_items):
+    print('[{}]'.format(price_i))
+    # price
+    show_pline(i, price_i, plist)
+    # verified
+    print(show_sku_by_id(un_id, idx))
+    pname, pcompany = extract_pline(price_i, plist)
+
+    tn_zone = zone_docs(pname, tn_terms_docs)
+    print('\ntn: \n{}'.format(tn_zone))
+
+    dosage_zone = zone_docs(pname, dasage_terms_docs)
+    print('\ndosage: \n{}'.format(dosage_zone))
+
+    company_zone = zone_docs(pname, company_terms_docs)
+    print('\ncompany: \n{}'.format(company_zone))
+
+###
+### Body
+###
+
+if __name__ == '__main__':
+  verified, plist, idx = get_sources()
+  through_verifed(verified, plist, idx)
 

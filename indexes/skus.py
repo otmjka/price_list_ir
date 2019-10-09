@@ -50,4 +50,20 @@ def build_sku_row_idx():
   rows_id_inv = build_inv_row_en_uuid(rows_id) # {[UN_UUID]: row_num}
   return dict(rows_id=rows_id, rows_id_inv=rows_id_inv)
 
+def get_sku_row_by_id(un_id: str, idx: dict):
+  skus_idx = idx['skus_idx']
+  skus_id_rows_idx = skus_idx['rows_id_inv']
+
+  if un_id not in skus_id_rows_idx:
+    return False
+  sku_row = skus_id_rows_idx[un_id]
+  return sku_row
+
+
+def get_sku_data(un_id: str, idx: dict):
+  sku_row = get_sku_row_by_id(un_id, idx)
+  un_skus = idx['un_skus']
+  un_sku_data = un_skus[sku_row]
+  _sku_id, sku_data = un_sku_data
+  return sku_row, sku_data
 

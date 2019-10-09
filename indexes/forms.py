@@ -6,11 +6,34 @@ from db.dosage import fetch_dosage_forms
 
 from indexes.skus import build_sku_row_idx
 
-from helpers.skus import str_to_dict
+import json
 from helpers.strings import get_bow
 
 from enums.common import MAN_FORMS, DOSAGE_FORM_ID
 
+
+def dosage_name_by_id(dosage_id, idx):
+  dosage_idx = idx['dosage_idx']
+  dosage_id_row = dosage_idx['id_row']
+  dosage_forms_recs = dosage_idx['recs']
+  dosage_row = dosage_id_row[dosage_id]
+  dosage_rec = dosage_forms_recs[dosage_row]
+  dosage_name = dosage_rec[1]
+  return dosage_name
+
+
+def dosage_rows_by_id_list(dosage_id_list, idx):
+  dosage_idx = idx['dosage_idx']
+  dosage_id_row = dosage_idx['id_row']
+  dosage_rows = [dosage_id_row[dosage_id] for dosage_id in dosage_id_list]
+  return dosage_rows
+
+def dosage_names_by_id_list(dosage_id_list, idx):
+  dosage_names = list()
+  for dosage_id in dosage_id_list:
+    dosage_name = dosage_name_by_id(dosage_id, idx)
+    dosage_names.append(dosage_name)
+  return dosage_names
 # {
 # ...
 #   ['bc479032-5c43-4f32-a98f-e020fcb77f1d']: {
@@ -19,6 +42,10 @@ from enums.common import MAN_FORMS, DOSAGE_FORM_ID
 #   }
 # ...
 # }
+def str_to_dict(sku_str: str):
+  sku_dict = json.loads(sku_str)
+  return sku_dict
+
 def get_dosage_items():
   skus = db_un.get_en_skus()
   dosages = dict() # {[id]: value}
@@ -157,16 +184,28 @@ def get_sku_data(sku: tuple):
 def get_dosage_form_id(sku_data: dict):
   man_forms = sku_data[MAN_FORMS]
   dosage_id_list = [mform[DOSAGE_FORM_ID] for mform in man_forms]
-  #     dosage_id = man_forms[DOSAGE_FORM_ID]
   return dosage_id_list
 
+def get_dosage_names(sku_data, idx):
+  dosage_id_list = get_dosage_form_id(sku_data)
+  dosage_names = dosage_names_by_id_list(dosage_id_list, idx)
+  return dosage_names
+
+def get_dosage_rows(sku_data, idx):
+  dosage_id_list = get_dosage_form_id(sku_data)
+  dosage_rows = dosage_rows_by_id_list(dosage_id_list, idx)
+  return dosage_rows
 
 ### go through UN skus table
 ### => {.., [${dosage_row}]: [sku_doc_0, ..., sku_doc_n], ...}
-def build_dosage_row_docs(skus, skus_id_rows_idx, dosage_forms_idx):
-  dosage_row_id = dosage_forms_idx['id_row']
+def build_dosage_row_docs(idx):
+  # sku index
+  un_skus = idx['un_skus']
+  skus_id_rows_idx = idx['skus_idx']['rows_id_inv']
+  dosage_row_id = idx['dosage_idx']['id_row']
+
   row_docs = dict()
-  for sku in skus:
+  for sku in un_skus:
     un_id = get_sku_uuid(sku)  # 00004ee5-aea0-4fb4-9d0b-a401584c6be5
     sku_data = get_sku_data(sku)  # {"packs": {}, ..., "trade_name": "...", "address_id": "..."}
     # doc_row by un_sku_id
@@ -191,18 +230,63 @@ def build_dosage_row_docs(skus, skus_id_rows_idx, dosage_forms_idx):
       row_docs[dosage_row_by_id] = docs
   return row_docs
 
-def get_dosage_row_docs():
-  # sku index
-  un_skus = get_en_skus()
-  sku_indexes = build_sku_row_idx()
-  skus_id_rows_idx = sku_indexes['rows_id_inv']
+# ('0006df9c-f765-4821-82f0-0f5dd6b28126', 'лиофилизат спрея', '13.3')
+def get_dosage_by_row(doc, idx):
+    dosage_forms_recs = idx['dosage_idx']['recs']
+    dosage_rec = dosage_forms_recs[doc]
+    uuid, name, code = dosage_rec
+    return name
+
+def get_dosage_row_docs(idx):
 
   # dosage index
   # => 'terms_docs', 'row_id', 'id_row'
-  dosage_forms_idx = build_dosage_forms_idx()
-  row_docs = build_dosage_row_docs(un_skus, skus_id_rows_idx, dosage_forms_idx)
+  row_docs = build_dosage_row_docs(idx)
   return row_docs
 
+def get_dosage_row_by_un_id(un_id, idx):
+  skus_id_row_idx = idx['skus_idx']['rows_id_inv']
+  un_skus = idx['un_skus']
+  sku_row_number = skus_id_row_idx[un_id]
+  sku_data = un_skus[sku_row_number][1]
+  dosage_id_list = get_dosage_form_id(sku_data)
+  dosage_names = dosage_names_by_id_list(dosage_id_list, idx)
+  dosage_rows = dosage_rows_by_id_list(dosage_id_list, idx)
+  return dosage_rows, dosage_names
 
+#
+# verifed
+#
 
+# из верифицированных берем чтоб добавить в словарь
+def get_verified_dosage_by_row(price_row, verified, idx):
+  un_id = verified[price_row]
+  dosage_rows, dosage_names = get_dosage_row_by_un_id(un_id, idx)
+  print(dosage_rows, dosage_names)
+  return dosage_rows, dosage_names
+
+# добавляет дозировку из верифицированного документа
+def add_dosage_term_list_doc(terms, verified_row, verified, idx):
+  terms_docs = idx['dosage_idx']['terms_docs']
+  # [1225] ['таблетки, покрытые оболочкой']
+  dosage_docs, dosage_names = get_verified_dosage_by_row(verified_row, verified, idx)
+
+  for t in terms:
+    if t not in terms_docs:
+      print('[{}] not exists!'.format(t))
+      terms_docs[t] = list()
+    docs = terms_docs[t]
+    for ddoc in dosage_docs:
+      if ddoc in docs:
+        print('{} exists in {} skipped'.format(ddoc, t))
+        continue
+      docs.append(ddoc)
+      terms_docs[t] = sorted(docs)
+
+"""
+### from indexes.forms import build_dosage_row_docs
+### # by dosage row get all docs(skus) where meeted
+### skus_by_dosage_row = build_dosage_row_docs(idx)
+### idx['skus_by_dosage_row'] = skus_by_dosage_row
+"""
 

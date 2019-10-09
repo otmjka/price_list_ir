@@ -1,10 +1,6 @@
 from db.company import get_companies, get_companies_synonyms
-from db.company import get_addr_company_table
 # UN skus for indexing
-from db.un import get_en_skus
 from db.un import get_sku_uuid, get_sku_data
-
-from indexes.skus import build_sku_row_idx
 
 from helpers.strings import get_bow
 
@@ -94,25 +90,24 @@ def get_address_id(data: dict):
 ### go through UN skus table
 ### create
 ### {..., [${company_row}]: [sku_doc_0, ..., sku_doc_n], ...}
-def build_skus_by_company_row():
+def build_skus_by_company_row(idx):
 
   #
   # sku idx
   #
 
-  un_skus = get_en_skus()
+  un_skus = idx['un_skus']
 
-  sku_indexes = build_sku_row_idx()
-  skus_id_rows_idx = sku_indexes['rows_id_inv']  # {..., [`${un_id}`]: row_num, ...}
+  skus_id_rows_idx = idx['skus_idx']['rows_id_inv']  # {..., [`${un_id}`]: row_num, ...}
 
   #
   # company
   #
 
-  company_idx = build_company_idx()
+  company_idx = idx['company_idx']
   company_id_idx = company_idx['company_id_idx']
 
-  addr_company_idx = get_addr_company_table()
+  addr_company_idx = idx['addr_company_idx']
 
   # build_skus_by_company_row output:
   # fail address id d8c7d99f-17e2-422e-a8dc-306fbb502483
@@ -151,3 +146,39 @@ def build_skus_by_company_row():
 
     row_docs[company_row_by_id] = docs
   return row_docs
+
+
+def company_short_name(sku_data, idx: dict):
+  address_id = get_address_id(sku_data)
+
+  company_idx = idx['company_idx']
+  addr_company_idx = idx['addr_company_idx']
+  company_id_by_address_id = addr_company_idx['addr_cmp']
+  company_id = company_id_by_address_id[address_id]
+
+  company_id_idx = company_idx['company_id_idx']
+  company_src = company_idx['companies_table']
+  c_row = company_id_idx[company_id]
+  c_rec = company_src[c_row]
+  short_rus_name = c_rec[3] or c_rec[2] or c_rec[1]
+  return short_rus_name
+
+# sku_data => address_id => company_id => company_row
+def get_company_row_by_sku_data(sku_data, idx):
+  address_id = get_address_id(sku_data)
+  company_id = idx['addr_company_idx']['addr_cmp'][address_id]
+  company_row = idx['company_idx']['company_id_idx'][company_id]
+  return company_row
+
+def add_terms_docs(term_str, doc, idx):
+  terms_docs = idx['company_idx']['terms_docs']
+  terms = get_bow(term_str)
+  for t in terms:
+    if t not in terms_docs:
+      terms_docs[t] = list()
+    docs = terms_docs[t]
+    if doc in docs:
+      print('{} exists in {} skipped'.format(doc, t))
+      continue
+    docs.append(doc)
+    terms_docs[t] = sorted(docs)

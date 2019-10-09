@@ -1,9 +1,9 @@
-from helpers.strings import tokenize
+from helpers.strings import get_bow
 from helpers.skus import get_tn
 
 def tn_zone(sku_name, terms_docs):
   zone = list()
-  name_terms = tokenize(sku_name)
+  name_terms = get_bow(sku_name)
   freq = list()
   for term in name_terms:
     docs = None
