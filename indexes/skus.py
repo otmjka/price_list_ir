@@ -59,6 +59,10 @@ def get_sku_row_by_id(un_id: str, idx: dict):
   sku_row = skus_id_rows_idx[un_id]
   return sku_row
 
+def get_sku_id_by_row(row_num: int, idx: dict):
+  skus_idx = idx['skus_idx']
+  skus_rows_id_idx = skus_idx['rows_id']
+  return skus_rows_id_idx[row_num]
 
 def get_sku_data(un_id: str, idx: dict):
   sku_row = get_sku_row_by_id(un_id, idx)
@@ -66,4 +70,6 @@ def get_sku_data(un_id: str, idx: dict):
   un_sku_data = un_skus[sku_row]
   _sku_id, sku_data = un_sku_data
   return sku_row, sku_data
+
+
 

@@ -1,16 +1,21 @@
 from helpers.strings import get_bow
 from helpers.skus import get_tn
 
+"""
+### { `term`: [sku_doc_0, ...], ...}
+###
+###
+
+### TODO: term -> trade term-source
+"""
 def tn_zone(sku_name, terms_docs):
   zone = list()
   name_terms = get_bow(sku_name)
-  freq = list()
   for term in name_terms:
     docs = None
     if term in terms_docs:
       docs = terms_docs[term]
-    freq.append((term, docs))
-  zone.append(freq)
+    zone.append((term, docs))
   return zone
 
 def test_tn_item(item):

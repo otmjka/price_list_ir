@@ -15,7 +15,7 @@ from indexes.forms import build_dosage_forms_idx
 
 from db.company import get_addr_company_table
 from indexes.company import build_company_idx
-
+from indexes.company import build_skus_by_company_row
 #
 # Indexes
 #
@@ -49,5 +49,6 @@ def all_idx():
         dosage_idx=dosage_idx,
         tn_idx=tn_idx
     )
-
+    skus_by_company_row = build_skus_by_company_row(idx)
+    idx['skus_by_company_row'] = skus_by_company_row
     return idx

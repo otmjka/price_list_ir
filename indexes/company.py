@@ -157,9 +157,15 @@ def company_short_name(sku_data, idx: dict):
   company_id = company_id_by_address_id[address_id]
 
   company_id_idx = company_idx['company_id_idx']
-  company_src = company_idx['companies_table']
   c_row = company_id_idx[company_id]
-  c_rec = company_src[c_row]
+
+  short_rus_name = get_company_sname(c_row, idx)
+  return short_rus_name
+
+def get_company_sname(cdoc: int, idx: dict):
+  company_idx = idx['company_idx']
+  company_src = company_idx['companies_table']
+  c_rec = company_src[cdoc]
   short_rus_name = c_rec[3] or c_rec[2] or c_rec[1]
   return short_rus_name
 

@@ -71,14 +71,14 @@ def flat_company_zone(c_zone, skus_by_company_row):
 #
 # Weight
 #
-def add_lists(lists, weights):
+def add_lists(lists, weights, idx):
   d = dict()
   for i, item_list in enumerate(lists):
     for item in item_list:
       if item not in d:
         d[item] = 0
       d[item] += weights[i]
-  result = [(doc, w) for doc, w in sorted(d.items(), key=lambda t: t[1], reverse=True)]
+  result = [(doc, w, show_sku_by_row(doc, idx)) for doc, w in sorted(d.items(), key=lambda t: t[1], reverse=True)]
   return result
 
 # [flat_skus_tn, flat_skus_dosage, flat_skus_c], [0.5, 0.4, 0.1])

@@ -57,9 +57,12 @@ def show_sku(sku_data: dict):
 def show_sku_data(sku_data, idx, un_row=0, un_id=''):
   # trade_name
   tn = get_tn_from_data(sku_data)
-  # Dosage
+  # man form
   dosage_names = get_dosage_names(sku_data, idx)
   dosage_rows = get_dosage_rows(sku_data, idx)
+  # dosage
+  # count
+  count = get_count(sku_data, idx)
   # Company
   company = company_short_name(sku_data, idx)
   return '[{}] [{}] [{}] [{}] [{}]'.format(tn, ';'.join(dosage_names), company, un_row, un_id)
@@ -78,4 +81,9 @@ def show_sku_by_row(row_num: int, idx):
   sku_data = get_sku_data_by_row(row_num, idx)
   return show_sku_data(sku_data, idx, un_row=row_num)
 
+# TODO: maybe to tn.index
+def get_sku_id_by_row(row_num: int, idx: dict):
+  skus_idx = idx['skus_idx']
+  skus_rows_id_idx = skus_idx['rows_id']
+  return skus_rows_id_idx[row_num]
 
