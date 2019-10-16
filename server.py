@@ -1,27 +1,8 @@
 from aiohttp import web
 import aiohttp_cors
-from index import get_sources
-from servers.helpers import get_item, search_tn
 
-
-print('loading data...')
-sources = get_sources()
-print('finished!')
-
-async def handle_index(request):
-  i = request.match_info.get('id', 0)
-  # с клиента приходит индекс
-  response = get_item(i, sources)
-  return web.json_response(response)
-
-async def handle_tn(request):
-  body = await request.json()
-  query = body['query']
-
-  idx = sources[2]
-  response = search_tn(query, idx)
-
-  return web.json_response(response)
+from app.routes import handle_tn
+from app.routes import handle_index 
 
 def setup_app():
   app = web.Application()

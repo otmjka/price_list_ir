@@ -13,6 +13,7 @@ def get_count(sku_data: dict, idx: dict):
     base_measure_unit_count_end = mf_pack['base_measure_unit_count_end']
     mfp_accum += '[{}]'.format(base_measure_unit_count)
 
+  return '[{}] [{}] [{}]'.format(count, level_type, mfp_accum)
 """
 ('2f2b5a30-5893-44c9-88a5-061f8e8c5b12',
  {'packs': {'count': 1,

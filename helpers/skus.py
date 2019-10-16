@@ -6,6 +6,7 @@ import db.un as db_un
 from indexes.forms import get_dosage_names, get_dosage_rows
 from indexes.company import company_short_name
 from indexes.skus import get_sku_data
+from indexes.count import get_count
 
 from enums.common import TRADE_NAME
 
