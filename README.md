@@ -15,3 +15,11 @@ load en
 build row_num/en_uuid index
 load price
 simple tokenize
+
+## TODO:
+
+upload file
+hash to file
+make config
+logging
+

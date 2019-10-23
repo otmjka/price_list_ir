@@ -17,7 +17,7 @@ info('db: init {}'.format(DB_PATH))
 # un_skus = None
 cache = dict(un_skus=None)
 
-def db_con(db_path):
+def db_con(db_path=DB_PATH):
   info('connecting to {}'.format(db_path))
   conn = sqlite3.connect(db_path, check_same_thread=False, uri=True)
   cursor = conn.cursor()

@@ -23,21 +23,24 @@ from indexes.company import build_skus_by_company_row
 def all_idx():
     # skus
     skus_idx = build_sku_row_idx() # dict_keys(['rows_id', 'rows_id_inv'])
+    print('{} loaded'.format(skus_idx.keys()))
     un_skus = get_en_skus()
+    print('[{}] loaded'.format('un_skus'))
 
     # trade_name
 
     tn_idx = build_tn_indexes()
-
+    print('{} loaded'.format(tn_idx.keys()))
     # dosage
 
     dosage_idx = build_dosage_forms_idx() # dict_keys(['terms_docs', 'row_id', 'id_row', 'recs'])
-
+    print('{} loaded'.format(dosage_idx.keys()))
     # company
 
     addr_company_idx = get_addr_company_table()# dict_keys(['recs', 'addr_cmp', 'cmp_addreses'])
+    print('{} loaded'.format(addr_company_idx.keys()))
     company_idx = build_company_idx() # dict_keys(['company_id_idx', 'company_id_idx_inv', 'terms_docs', 'companies_table', 'companies_synonyms'])
-
+    print('{} loaded'.format(company_idx.keys()))
 
     ### build
 

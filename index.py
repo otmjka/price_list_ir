@@ -16,11 +16,15 @@ from helpers.skus import show_sku_by_id
 from zones.common import zone_docs
 
 
-def get_sources():
+def get_sources(verifed=False):
   # Verified
-  verified = report_row_num_un_uuid() # (0)
+  verified = None
+  if verifed:
+    verified = report_row_num_un_uuid() # (0)
+    print('verified loaded')
   # Price list
   plist = load_pulse() # (1)
+  print('pulse price loaded')
 
   #
   # Indexes

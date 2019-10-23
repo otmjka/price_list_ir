@@ -71,6 +71,7 @@ def flat_company_zone(c_zone, skus_by_company_row):
 #
 # Weight
 #
+### => [(doc, weight, sku_to_string)]
 def add_lists(lists, weights, idx):
   d = dict()
   for i, item_list in enumerate(lists):

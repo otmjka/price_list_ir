@@ -1,6 +1,19 @@
 import pandas as pd
 
 cached = dict()
+XLS = 'xls'
+CSV = 'csv'
+
+def load_price_list(plpath, cache_name=None, ext=XLS):
+  if ext == XLS:
+    price_list = pd.read_excel(plpath)
+  if ext == CSV:
+    price_list = pd.read_csv(plpath, sep='\t')
+
+  if cache_name != None:
+    cached[cache_name] = price_list
+
+  return price_list
 
 def load_pulse():
   if 'plist_cached' in cached:

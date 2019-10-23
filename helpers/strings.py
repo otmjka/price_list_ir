@@ -13,8 +13,10 @@ def tokenize(string):
   result = splitted
   return result
 
-def get_bow(name: str):
-  return re.split(r"\+|\|\*| |\n|\(|\)|\[|\]|'|\"|\t|«|»|&|;|:|,", name.lower())
+def get_bow(name: str, min_len=0):
+  term_list = re.split(r"\+|\|\*| |\n|\(|\)|\[|\]|'|\"|\t|«|»|&|;|:|,", name.lower())
+  empty_filtered = [term for term in term_list if len(term) > min_len]
+  return empty_filtered
 
 # bag_of_words = re.split(
 #         r"\+|\|\*| |\n|\(|\)|\-|\[|\]|'|\"|\t|«|»|&|;|:|,",

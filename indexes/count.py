@@ -1,19 +1,44 @@
 def get_count(sku_data: dict, idx: dict):
-  packs = sku_data['packs']
-  count = packs['count'] # 1
-  count_end = packs['count_end']
-  level_type = packs['level_type'] # : 'primary'
-  pack_type_id = packs['pack_type_id'] # упаковка контурная ячейковая(блистер)
-
-  man_form_packs = packs['man_form_packs'] # list
-  mfp_accum = ''
-  for mf_pack in man_form_packs:
-    base_measure_unit_id = mf_pack['base_measure_unit_id'] # шт
-    base_measure_unit_count = mf_pack['base_measure_unit_count'] # 20
-    base_measure_unit_count_end = mf_pack['base_measure_unit_count_end']
-    mfp_accum += '[{}]'.format(base_measure_unit_count)
-
-  return '[{}] [{}] [{}]'.format(count, level_type, mfp_accum)
+  # packs = sku_data['packs']
+  # count = packs['count'] # 1
+  # count_end = packs['count_end']
+  # level_type = packs['level_type'] # : 'primary'
+  # pack_type_id = packs['pack_type_id'] # упаковка контурная ячейковая(блистер)
+  #
+  # man_form_packs = 'man_form_packs' in packs and packs['man_form_packs'] # list
+  # if not man_form_packs:
+  #   return '[{}] [{}] [{}]'.format(count, level_type, '-')
+  # mfp_accum = ''
+  # for mf_pack in man_form_packs:
+  #   base_measure_unit_id = mf_pack['base_measure_unit_id'] # шт
+  #   base_measure_unit_count = mf_pack['base_measure_unit_count'] # 20
+  #   base_measure_unit_count_end = mf_pack['base_measure_unit_count_end']
+  #   mfp_accum += '[{}]'.format(base_measure_unit_count)
+  #
+  # return '[{}] [{}] [{}]'.format(count, level_type, mfp_accum)
+  CHLD = 'children'
+  sku_packs = sku_data['packs']
+  packs_count = sku_packs['count']
+  if CHLD in sku_packs:
+    children_packs = sku_packs['children']
+    total_accum_count = 0
+    for cpack in children_packs:
+      if cpack['level_type'] == 'primary':
+        ccount = cpack['count']
+        man_form_packs = cpack['man_form_packs']
+        accum_count = 0
+        for mf_pack in man_form_packs:
+          accum_count += mf_pack['base_measure_unit_count']
+        total_accum_count = total_accum_count + ccount * accum_count
+  else:
+    if sku_packs['level_type'] == 'primary':
+      man_form_packs = sku_packs['man_form_packs']
+      accum_count = 0
+      for mf_pack in man_form_packs:
+        accum_count += mf_pack['base_measure_unit_count']
+      total_accum_count = accum_count
+  print('!!!', total_accum_count * packs_count)
+  return total_accum_count * packs_count
 """
 ('2f2b5a30-5893-44c9-88a5-061f8e8c5b12',
  {'packs': {'count': 1,
