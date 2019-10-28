@@ -18,6 +18,10 @@ def tn_zone(sku_name, terms_docs):
     zone.append((term, docs))
   return zone
 
+def tn_zone(sku_name, terms_docs):
+  name_terms = get_bow(sku_name)
+  return [(term, terms_docs.get(term, None)) for term in name_terms]
+
 def test_tn_item(item):
     # all tn equal
     # single word

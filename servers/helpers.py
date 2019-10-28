@@ -91,10 +91,11 @@ def candidates_by_price_row(i, src: dict):
 
   return result
 
-def search_tn(query, idx):
+def search_tn(q, idx):
   terms_docs = idx['tn_idx']['terms_docs']
   response = {'terms': dict(), 'tn_list': list(),
               'part_tn_list': list()}
+  query = q.lower()
   if query in terms_docs:
     docs = terms_docs[query]
     if query not in response['terms']:

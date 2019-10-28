@@ -1,3 +1,4 @@
+from typing import List
 import re
 SPACE = ' '
 
@@ -13,9 +14,11 @@ def tokenize(string):
   result = splitted
   return result
 
-def get_bow(name: str, min_len=0):
-  term_list = re.split(r"\+|\|\*| |\n|\(|\)|\[|\]|'|\"|\t|«|»|&|;|:|,", name.lower())
-  empty_filtered = [term for term in term_list if len(term) > min_len]
+def get_bow(name: str, min_len=0) -> List[str]:
+  lower_value = name.lower()
+  pattern = r"\+|\|\*| |\n|\(|\)|\[|\]|'|\"|\t|«|»|&|;|:|,"
+  term_list: List[str] = re.split(pattern, lower_value)
+  empty_filtered: List[str] = [term for term in term_list if len(term) > min_len]
   return empty_filtered
 
 # bag_of_words = re.split(
